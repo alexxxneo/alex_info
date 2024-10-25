@@ -126,7 +126,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # Пользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=111111 # Пароль пользователя базы данных
     volumes:
       - ./:/var/www
     container_name: sambia_app
@@ -147,7 +147,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # Пользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=1111111 # Пароль пользователя базы данных
       - MYSQL_ROOT_PASSWORD=root
     ports:
       - 3333:3306
@@ -308,7 +308,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # sПользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=1111111 # Пароль пользователя базы данных
     #volumes: # пробрасывать сайт при отправке на дев или прод не нужно. Весь проект в образе
     #  - ./:/var/www
     depends_on:
@@ -329,7 +329,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # Пользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=11111111 # Пароль пользователя базы данных
       - MYSQL_ROOT_PASSWORD=root
     ports:
       - 3306:3306
@@ -960,9 +960,9 @@ services:
       - ./tmp/db:/var/lib/mysql # стандартный путь для mysql /var/lib/mysql
     environment:
       MYSQL_DATABASE: sambiaho_sambia
-      MYSQL_ROOT_PASSWORD: adm456456
+      MYSQL_ROOT_PASSWORD: 111111111
       #MYSQL_USER: sambiaho_last
-      #MYSQL_PASSWORD: adm456456
+      #MYSQL_PASSWORD: 111111
     ports:
       - 3333:3306
     command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
@@ -975,7 +975,7 @@ DB_HOST=db
 DB_PORT=3306
 DB_DATABASE=sambiaho_sambia
 DB_USERNAME=root
-DB_PASSWORD=adm456456
+DB_PASSWORD=111111111111
 ```
 
 
@@ -1010,7 +1010,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # Пользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=111111111 # Пароль пользователя базы данных
     volumes:
       - ./:/var/www
     depends_on:
@@ -1031,7 +1031,7 @@ services:
       - MYSQL_PORT=3306        # Порт для MySQL
       - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
       - MYSQL_USER=sambiaho_last    # Пользователь базы данных
-      - MYSQL_PASSWORD=adm456456 # Пароль пользователя базы данных
+      - MYSQL_PASSWORD=11111111 # Пароль пользователя базы данных
       - MYSQL_ROOT_PASSWORD=root
     ports:
       - 3333:3306

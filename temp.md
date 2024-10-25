@@ -129,9 +129,9 @@ sudo apt install -y mysql-server
 sudo mysql -u root -p
 
 CREATE DATABASE sambiaho_sambia;
-CREATE USER 'sambiaho_last'@'localhost' IDENTIFIED BY 'adm456456';
+CREATE USER 'sambiaho_last'@'localhost' IDENTIFIED BY '1111111s';
 GRANT ALL PRIVILEGES ON sambiaho_sambia.* TO 'sambiaho_last'@'localhost';
-ALTER USER 'sambiaho_last'@'localhost' IDENTIFIED WITH mysql_native_password BY 'adm456456';
+ALTER USER 'sambiaho_last'@'localhost' IDENTIFIED WITH mysql_native_password BY '1111111';
 FLUSH PRIVILEGES;
 EXIT;
 

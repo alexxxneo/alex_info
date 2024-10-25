@@ -2,6 +2,7 @@
 apt update 
 apt install -y libguestfs-tools # Устанавливаем libguestfs-tools для работы с образами виртуальных машин
 
+mkdir -p /root/template
 export IMAGES_PATH="/root/template" 
 export IMAGE_NAME="jammy-server-cloudimg-amd64.img" # имя образа, который будет загружен офф сайта
 
