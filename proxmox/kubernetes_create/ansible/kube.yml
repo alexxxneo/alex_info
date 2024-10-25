@@ -1,0 +1,175 @@
+---
+- hosts: all  # Выполнение на всех хостах, указанных в файле ansible-hosts.txt
+  become: true  # Выполнение задач с правами суперпользователя (sudo)
+  remote_user: ubuntu  #  определяет каким пользователем будет происходить подключение и выполнение задач. Далее повышаются права и выполняются задачи уже от суперпользователя
+  tasks:
+  - name: Устанавливаем пакеты для работы с apt по HTTPS и другие зависимости
+    apt:
+      name: "{{ packages }}"  # Список пакетов для установки
+      state: present  # Убеждаемся, что пакеты установлены, если нет то устанавливаем пакеты актуальных верси
+      update_cache: yes  # apt update перед установкой
+    vars:
+      packages:  # Определяем переменную 'packages' со списком пакетов
+      - apt-transport-https  # Позволяет apt работать через HTTPS
+      - ca-certificates  # Установка сертификатов для HTTPS
+      - curl  # Утилита для передачи данных с использованием различных протоколов
+      - gnupg-agent  # Менеджер ключей для работы с GPG. Необходим для того, чтобы корректно импортировать и управлять GPG-ключами, что позволяет проверять подлинность пакетов, загружаемых из внешних репозиториев (Docker, Kubernetes). Используется модулем apt_key
+      - software-properties-common  # Утилита для управления репозиториями. Нужна для модуля "apt_repository"
+  
+  - name: Добавление ключа для подписи пакетов Docker
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg  # URL ключа для Docker
+      state: present  # Убедиться, что ключ добавлен
+  
+  - name: Добавление репозитория Docker для последней стабильной версии
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable 
+      state: present  # Убедиться, что репозиторий добавлен
+  
+  - name: Установка Docker и его зависимостей
+    apt: 
+      name: "{{ packages }}"  # Список пакетов для установки из переменной packages
+      state: present  # Убедиться, что пакеты установлены
+      update_cache: yes  # Обновить кэш apt перед установкой
+    vars:
+      packages:  # Определение переменной 'packages' со списком пакетов для Docker
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  
+  - name: Проверка, что Docker установлен, запущен и включен автозапуск
+    service:
+      name: docker  
+      state: started 
+      enabled: yes  
+  
+  - name: Удаление swap из файла fstab
+    mount:
+      name: "{{ item }}"  # Монтируемые файловые системы
+      fstype: swap  # Тип файловой системы swap
+      state: absent  # Удалить запись из fstab
+    with_items:  # Перебор значений для удаления из fstab
+      - swap
+      - none
+  
+  - name: Disable swap  # Отключение swap на системе
+    command: swapoff -a  # Отключить все swap-разделы
+    when: ansible_swaptotal_mb >= 0  # Выполнять только, если swap присутствует (объем памяти swap больше 0)
+    
+  - name: Добавление ключа для подписи пакетов Kubernetes
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg  # URL ключа для Kubernetes
+      state: present  # Убедиться, что ключ добавлен
+
+  - name: Добавление репозитория Kubernetes
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main  # Указание репозитория Kubernetes
+      state: present  # Убедиться, что репозиторий добавлен
+      filename: kubernetes.list  # Указание имени файла репозитория
+
+  - name: Установка бинарных файлов Kubernetes
+    apt: 
+      name: "{{ packages }}"  # Список пакетов для установки
+      state: present  # Убедиться, что пакеты установлены
+      update_cache: yes  # Обновить кэш apt перед установкой
+    vars:
+      packages:  # Определение переменной 'packages' с конкретными версиями Kubernetes
+        - kubelet
+        - kubeadm
+        - kubectl
+        
+  - name: Закрепление версий Kubernetes чтобы не обновлялись
+    dpkg_selections:
+      name: "{{ item }}" 
+      selection: hold  # Установить версию на удержание (не обновлять)
+    loop:  # Перебор пакетов Kubernetes
+      - kubelet
+      - kubeadm
+      - kubectl
+        
+  - name: Restart kubelet  # Перезапуск сервиса kubelet
+    service:
+      name: kubelet  # Управление сервисом kubelet
+      daemon_reload: yes  # Перезагрузка демонов
+      state: restarted  # Убедиться, что сервис перезапущен
+      
+  - name: Добавление пользователя ubuntu в группу docker
+    user:
+      name: ubuntu
+      group: docker
+
+
+      
+
+
+
+
+- hosts: kube_server              # Определяет хосты из инвентаря, на которых будут выполняться задачи. В данном случае это 'kube_server'.
+  become: true                    # Выполнять задачи от имени суперпользователя (root).
+  remote_user: ubuntu              # Устанавливает удалённого пользователя для подключения по SSH.
+
+  vars_files:
+    - ansible-vars.yml             # Подключает внешний файл с переменными 'ansible-vars.yml'.
+
+  tasks:                           # Начало секции задач.
+  
+  - name: set docker to use systemd cgroups driver # Название задачи: установка использования драйвера cgroups для Docker.
+    copy:                                             # Копирует конфигурационный файл на целевую машину.
+      dest: "/etc/docker/daemon.json"                 # Местоположение файла на удалённой машине.
+      content: |                                      # Содержимое файла, в котором указано, что Docker будет использовать драйвер cgroups от systemd.
+        {
+          "exec-opts": ["native.cgroupdriver=systemd"]
+        }
+
+  - name: restart docker              # Название задачи: перезапуск службы Docker.
+    service:                          # Используется модуль 'service' для управления службами.
+      name: docker                    # Имя службы: Docker.
+      state: restarted                # Задает перезапуск службы.
+
+  - name: Initialize Kubernetes cluster  # Название задачи: инициализация кластера Kubernetes с помощью kubeadm.
+    command: "kubeadm init --pod-network-cidr {{ pod_cidr }}"  # Выполняет команду инициализации с указанием сети подов.
+    args:                                                      
+      creates: /etc/kubernetes/admin.conf # Пропускает выполнение задачи, если файл '/etc/kubernetes/admin.conf' уже существует.
+    register: kube_init                    # Регистрирует результат выполнения команды в переменную 'kube_init'.
+
+  - name: show kube init info   # Название задачи: выводит информацию о результате инициализации кластера.
+    debug:                      # Использует модуль 'debug' для вывода информации.
+      var: kube_init             # Выводит содержимое переменной 'kube_init'.
+
+  - name: Create .kube directory in user home  # Создает директорию '.kube' в домашнем каталоге пользователя.
+    file:                                      # Модуль для управления файлами и директориями.
+      path: "{{ home_dir }}/.kube"             # Указывает путь к директории.
+      state: directory                         # Указывает, что необходимо создать директорию.
+      owner: 1000                              # Устанавливает владельца директории (идентификатор пользователя).
+      group: 1000                              # Устанавливает группу владельца директории (идентификатор группы).
+
+  - name: Configure .kube/config files in user home  # Копирует конфигурационный файл Kubernetes в домашнюю директорию пользователя.
+    copy:                                            # Использует модуль 'copy' для копирования файла.
+      src: /etc/kubernetes/admin.conf                # Исходный файл (на удалённой машине).
+      dest: "{{ home_dir }}/.kube/config"            # Местоположение назначения.
+      remote_src: yes                                # Указывает, что файл находится на удаленной машине.
+      owner: 1000                                    # Устанавливает владельца файла.
+      group: 1000                                    # Устанавливает группу владельца файла.
+
+  - name: restart kubelet for config changes    # Название задачи: перезапуск службы kubelet для применения изменений конфигурации.
+    service:                                    # Модуль для управления службами.
+      name: kubelet                             # Имя службы: kubelet.
+      state: restarted                          # Перезапускает службу.
+
+  - name: get calico networking           # Задача: скачать манифест для сетевого решения Calico.
+    get_url:                              # Модуль для скачивания файлов по URL.
+      url: https://projectcalico.docs.tigera.io/manifests/calico.yaml  # URL для скачивания манифеста.
+      dest: "{{ home_dir }}/calico.yaml"                                # Путь, куда будет сохранён файл.
+
+  - name: apply calico networking     # Применяет сетевое решение Calico для кластера.
+    become: no                        # Выполняет команду без повышения привилегий.
+    command: kubectl apply -f "{{ home_dir }}/calico.yaml"  # Применяет манифест Calico с помощью команды kubectl.
+
+  - name: get dashboard                # Скачивает манифест для Kubernetes Dashboard.
+    get_url:                           # Модуль для скачивания файлов по URL.
+      url: https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.0/aio/deploy/recommended.yaml  # URL для манифеста Dashboard.
+      dest: "{{ home_dir }}/dashboard.yaml"                                                         # Путь для сохранения файла.
+
+  - name: apply dashboard           # Применяет манифест Dashboard в кластер.
+    become: no                      # Выполняет команду без повышения привилегий.
+    command: kubectl apply -f "{{ home_dir }}/dashboard.yaml"  # Применяет манифест Dashboard с помощью команды kubectl.

@@ -1,0 +1,88 @@
+---
+# tasks file for kubernetes_install
+
+# - name: Add Kubernetes GPG key        # Добавляем GPG ключи
+#   ansible.builtin.get_url:
+#     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+#     dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+#     mode: '0644'
+
+# - name: Adding apt repository for Kubernetes # Добавление репозитория Kubernetes
+#   apt_repository:
+#     repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-focal main"
+#     state: present
+#     filename: kubernetes.list         # Указание имени файла репозитория
+
+
+- name: Add an apt signing key for Kubernetes
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+    
+- name: Adding apt repository for Kubernetes
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+    filename: kubernetes.list
+
+
+# # 4. Добавляем GPG ключ для Kubernetes репозитория
+# - name: Add Kubernetes GPG key
+#   apt_key:
+#     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+#     state: present
+#   tags: kubernetes_repo
+
+# # 5. Добавляем Kubernetes репозиторий
+# - name: Add Kubernetes repository
+#   apt_repository:
+#     repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+#     state: present
+#   tags: kubernetes_repo
+
+# # 6. Обновляем кеш пакетов
+# - name: Update apt cache
+#   apt:
+#     update_cache: yes
+#   tags: update_cache
+
+
+# # Добавляем GPG ключ для Kubernetes
+# - name: Add Kubernetes GPG key
+#   command: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+# # Добавляем Kubernetes репозиторий с правильным ключом
+# - name: Add Kubernetes repository
+#   apt_repository:
+#     repo: deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-$(lsb_release -cs) main
+#     state: present
+
+# # Обновляем кеш пакетов
+# - name: Update apt cache
+#   apt:
+#     update_cache: yes
+
+- name: Install Kubernetes binaries   # Установка бинарных файлов Kubernetes
+  apt: 
+    name:                             # Список пакетов для установки
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present                    # Убедиться, что пакеты установлены
+    update_cache: yes                 # Обновить кэш apt перед установкой
+      
+- name: Hold versions of packages.    # Закрепление версий Kubernetes чтобы не обновлялись
+  dpkg_selections:
+    name: "{{ item }}" 
+    selection: hold                   # Установить версию на удержание (не обновлять)
+  loop:                               # Перебор пакетов Kubernetes
+    - kubelet
+    - kubeadm
+    - kubectl
+      
+- name: Restart kubelet               # Перезапуск сервиса kubelet
+  service:
+    name: kubelet                     # Управление сервисом kubelet
+    daemon_reload: yes                # Перезагрузка демонов
+    state: restarted                  # убеждаемся, что сервис перезапущен
+    

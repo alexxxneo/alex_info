@@ -1,0 +1,63 @@
+# version: '3'
+
+services:
+  nginx:
+    image: nginx
+    volumes:
+      - ./:/var/www/ #  прокидываем папку с проектом в контейнер с nginx 
+      - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/ # прокидываем конфиг nginx
+    ports:
+      - 8080:80
+    container_name: sambia_nginx
+    depends_on:
+      - app
+    networks:
+      - app_network            # Сеть для взаимодействия с PHP 
+ 
+  app:
+    # image: php:7.2-fpm
+    build: # при запуске docker compose собирается image на базе php:7.2-fpm, туда устанавливаются дополнения для php, копируется проект
+      context: .
+      dockerfile: _docker/app/Dockerfile
+    working_dir: /var/www/
+    environment:
+      - MYSQL_HOST=db          # Имя сервиса базы данных
+      - MYSQL_PORT=3306        # Порт для MySQL
+      - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
+      - MYSQL_USER=sambiaho_last    # Пользователь базы данных
+      - MYSQL_PASSWORD=111111 # Пароль пользователя базы данных
+    volumes:
+      - ./:/var/www
+    container_name: sambia_app
+    depends_on:
+      - db
+    networks:
+      - app_network            # Сеть для взаимодействия с PHP
+    
+  db:
+    image: mysql:5.7
+    restart: always # если контейнер упал, то докер его перезапускает
+    volumes:
+      - db_data:/var/lib/mysql     # Том для хранения данных базы данных
+      - ./db/backup.sql:/docker-entrypoint-initdb.d/backup.sql # Восстанавливаем базу данных из дампа при первом запуске
+    #  - ./tmp/db:/var/lib/mysql # стандартный путь для mysql /var/lib/mysql
+    environment:
+      - MYSQL_HOST=db          # Имя сервиса базы данных
+      - MYSQL_PORT=3306        # Порт для MySQL
+      - MYSQL_DATABASE=sambiaho_sambia # Имя базы данных
+      - MYSQL_USER=sambiaho_last    # Пользователь базы данных
+      - MYSQL_PASSWORD=111111 # Пароль пользователя базы данных
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - 3333:3306
+    #command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    container_name: sambia_db
+    networks:
+      - app_network            # Сеть для взаимодействия с PHP
+
+volumes:
+  db_data:  # Том для хранения данных MySQL
+
+networks:
+  app_network:  # Сеть для взаимодействия сервисов
+  

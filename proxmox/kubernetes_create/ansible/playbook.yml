@@ -1,0 +1,32 @@
+---
+- name: install docker and kubernetes on all 
+  hosts: kubernetes
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - docker_install
+    - kubernetes_install
+
+
+- name: create cluster
+  hosts: master
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - disable_swap
+    - kubernetes_create
+
+- name: node invite
+  hosts: workers
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - kubernetes_add_nodes
+
+- name: create dashboard
+  hosts: master
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - kubernetes_dashboard
+

@@ -1,0 +1,78 @@
+# Определяем этапы, которые будут выполняться в процессе CI/CD
+stages:
+  - build # стадия билда нашего образа
+  - deploy  # стадия деплоя
+
+# Создаем переменные окружения для использования в других частях конфигурации
+variables:
+  REGISTRY: "registry.gitlab.com/sambia1/sambia-small"  # URL реестра Docker в гитлабе
+
+# Команды, которые выполняются перед выполнением каждого этапа в stages
+before_script:
+  # Входим в Docker реестр, используя переменные GitLab для аутентификации
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+# Определяем задачу для сборки приложения
+app_build:
+  stage: build  # Указываем, что задача относится к этапу сборки
+  tags:
+    - build  # Указываем тег для выполнения на гитлаб раннере с тегом build на сервере
+  only:
+    - develop  # Задача выполняется только для ветки 'develop'
+    - tags # деплой при создании тега (релиза для мастер ветки)
+  
+  # Команды, которые будут выполняться в рамках этой задачи
+  script:
+    # Сборка Docker-образа с передачей аргумента NODE_ENV. в теге указываем переменные чтобы гитлаб смог забирать последнюю актуальную версию нашего образа
+    - docker build --build-arg NODE_ENV="dev" -t "$REGISTRY/dev/app:$CI_COMMIT_SHA" -f ./_docker/app/gitlab/Dockerfile .
+    # Публикация собранного образа в реестр Docker 
+    - docker push "$REGISTRY/dev/app:$CI_COMMIT_SHA"
+
+app_deploy:
+  stage: deploy
+  tags:
+    - develop # запускаем задачу на раннере с тегом develop
+  only:
+    - develop # деплой при коммите в девелоп ветку
+  script:
+    - export CONTAINER_PREFIX=sambia
+    # 1 вариант - самый краткий. Остановка и удаление всех контейнеров и томов, а так образов
+    - docker compose -f docker-compose.prod.yml down --volumes --rmi all # остановка  контейнеров и удаление всех ресурсов относящихся к этому файлу docker-compose.prod.yml
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d # запуск нового, нетронутого предыдущим шагом образа, а так же создание остальных ресурсов
+    - docker system prune -a -f # очистка всех НЕИСПОЛЬЗУЕМЫХ ресурсов на всякий случай, включая образы, сети, тома 
+
+    # 2 вариант -  остановка и удаления всех контейнеров включая все остановленные и томов по префиксу 
+    # - docker stop $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
+    # - docker rm $(docker ps -a | grep ${CONTAINER_PREFIX}_ | awk '{print $1}') || true
+    # - docker volume rm $(docker volume ls | grep ${CONTAINER_PREFIX}_ | awk '{print $2}') || true
+    
+    # 3 вариант - удаление по фильтру префикса. Выполняем удаление всех ресурсов и контейнеров в докере
+    # - docker stop $(docker ps -a -q --filter "name=${CONTAINER_PREFIX}_") || true
+    # - docker rm $(docker ps -a -q --filter "name=${CONTAINER_PREFIX}_") || true
+    # - docker volume rm $(docker volume ls -q --filter "name=${CONTAINER_PREFIX}_") || true
+    
+    #- docker network rm $(docker network ls -q --filter "name=${CONTAINER_PREFIX}_") || true
+    #- docker rmi $(docker images -q --filter "reference=${CONTAINER_PREFIX}_*") || true
+
+
+    #- docker exec sambia_app chown -R root:www-data /var/www && chmod 755 -R /var/www && chmod -R 775 /var/www/storage 
+    
+    # - docker exec ${CONTAINER_PREFIX}_app composer update
+    # - docker exec ${CONTAINER_PREFIX}_app composer install
+    # - docker exec ${CONTAINER_PREFIX}_app php artisan migrate
+    # - docker exec ${CONTAINER_PREFIX}_app php artisan cache:clear
+    # - docker exec ${CONTAINER_PREFIX}_app php artisan config:cache
+    # - docker exec ${CONTAINER_PREFIX}_app php artisan route:cache
+
+prod_deploy:
+  stage: deploy
+  tags:
+    - prod # выполнаяем на проде - на гитраннере с тегом prod
+  only:
+    - tags
+  when: manual
+  script:
+    - export CONTAINER_PREFIX=sambia
+    - docker compose -f docker-compose.prod.yml down --volumes --rmi all
+    - docker compose -p $CONTAINER_PREFIX -f docker-compose.prod.yml up -d 
+    - docker system prune -a -f # очистка всех НЕИСПОЛЬЗУЕМЫХ ресурсов на всякий случай, включая образы, сети, тома 

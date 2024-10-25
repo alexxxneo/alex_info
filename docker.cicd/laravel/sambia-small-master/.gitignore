@@ -1,0 +1,7 @@
+.DS_Store
+*.log
+/node_modules
+/storage/framework/cache/*
+/storage/cms/cache/*
+/storage/logs/*
+/.vscode

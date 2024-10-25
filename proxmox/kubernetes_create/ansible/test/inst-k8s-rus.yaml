@@ -1,0 +1,186 @@
+---
+- name: Setup Prerequisites To Install Kubernetes  # Название плейбука: настройка необходимых пакетов для установки Kubernetes
+  hosts: instance  # Определение группы хостов, на которых будет выполняться плейбук
+  become: true  # Выполнение задач от имени суперпользователя
+  vars:  # Определение переменных для использования в плейбуке
+    kube_prereq_packages: [curl, ca-certificates, apt-transport-https]  # Перечень пакетов, необходимых для установки Kubernetes
+    kube_packages: [kubeadm, kubectl, kubelet]  # Пакеты Kubernetes, которые будут установлены
+
+  tasks:  # Определение списка задач для выполнения
+    - name: Test Reacheability  # Проверка доступности хостов
+      ansible.builtin.ping:  # Встроенный модуль Ansible для проверки сетевого соединения
+
+    - name: Update Cache  # Задача по обновлению кэша пакетов
+      ansible.builtin.apt:  # Модуль Ansible для работы с пакетами apt
+        update_cache: true  # Включение обновления кэша пакетов
+        autoclean: true  # Очистка ненужных пакетов
+
+    - name: 1. Upgrade All the Packages to the latest  # Обновление всех установленных пакетов до последней версии
+      ansible.builtin.apt:  # Используется модуль apt
+        upgrade: "full"  # Полное обновление всех пакетов
+
+    - name: 2. Install Qemu-Guest-Agent  # Установка QEMU Guest Agent для взаимодействия с виртуальной машиной
+      ansible.builtin.apt:  # Модуль apt для установки пакетов
+        name:
+          - qemu-guest-agent  # Название пакета
+        state: present  # Состояние: пакет должен быть установлен
+
+    - name: 3. Setup a Container Runtime  # Установка среды выполнения контейнеров (Container Runtime)
+      ansible.builtin.apt:
+        name:
+          - containerd  # Установка контейнерной среды containerd
+        state: present  # Пакет должен быть установлен
+
+    - name: 4. Start Containerd If Stopped  # Запуск службы containerd, если она остановлена
+      ansible.builtin.service:  # Модуль для управления службами
+        name: containerd  # Имя службы
+        state: started  # Убедиться, что служба запущена
+
+    - name: 5. Create Containerd Directory  # Создание директории для конфигурации containerd
+      ansible.builtin.file:  # Модуль для работы с файлами и директориями
+        path: /etc/containerd  # Путь к директории
+        state: directory  # Убедиться, что это директория
+        mode: '0755'  # Права доступа
+
+    - name: 6. Check config.toml Exists  # Проверка наличия файла config.toml для containerd
+      ansible.builtin.stat:  # Модуль для получения информации о файле
+        path: /etc/containerd/config.toml  # Путь к файлу
+      register: pre_file_exist_result  # Сохранение результата в переменной
+
+    - name: 6.1 Delete config.toml Exists  # Удаление файла config.toml, если он существует
+      ansible.builtin.file:
+        path: /etc/containerd/config.toml  # Путь к файлу
+        state: absent  # Удалить файл
+      when: pre_file_exist_result.stat.exists  # Условие: если файл существует
+
+    - name: 7. Place Default Containerd Config Inside It  # Размещение стандартной конфигурации containerd в config.toml
+      ansible.builtin.shell: |  # Выполнение команд в оболочке
+        set -o pipefail  # Установка поведения оболочки для обработки ошибок
+        containerd config default | sudo tee /etc/containerd/config.toml  # Генерация и сохранение конфигурации
+      register: output  # Сохранение результата выполнения
+      changed_when: output.rc != 0  # Условие, когда команда считается изменяющей состояние
+
+    - name: 7.1 Check If New config.toml Exists Now  # Проверка наличия нового файла config.toml
+      ansible.builtin.stat:
+        path: /etc/containerd/config.toml  # Путь к файлу
+      register: post_file_exist_result  # Сохранение результата
+
+    - name: 7.2 Exit The Play If config.toml Does Not Exist  # Завершение выполнения плейбука, если файл не найден
+      ansible.builtin.fail:  # Завершение выполнения с ошибкой
+        msg: "config.toml was not created properly"  # Сообщение об ошибке
+      when: not post_file_exist_result.stat.exists  # Условие: если файл не существует
+- name: 7.2 Exit The Play If config.toml Does Not Exist  # Завершить выполнение playbook, если файл config.toml не существует
+  ansible.builtin.meta: end_play  # Модуль meta для завершения playbook
+  when: not post_file_exist_result.stat.exists  # Условие: файл не существует
+  tags:
+    - containerd_config  # Тег для задачи "containerd_config"
+
+- name: 8.1 Disable Swap  # Отключение свопирования
+  ansible.builtin.command: sudo swapoff -a  # Выполнение команды swapoff -a для отключения свопа
+  register: output  # Сохранение результата выполнения команды
+  changed_when: output.rc != 0  # Помечать как изменённую задачу, только если команда возвращает не нулевой код
+  tags:
+    - disable_swap  # Тег для задачи "disable_swap"
+
+- name: 8.2 Disable Swap permanently  # Отключение свопирования на постоянной основе
+  ansible.builtin.replace:  # Модуль replace для замены строк в файле
+    path: /etc/fstab  # Файл, в котором нужно произвести замену
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'  # Регулярное выражение для поиска строки с разделом своп
+    replace: '# \1'  # Закомментировать найденную строку, добавив символ "#" перед ней
+  tags:
+    - disable_swap  # Тег для задачи "disable_swap"
+
+- name: 9. Edit config.toml  # Редактирование файла config.toml
+  ansible.builtin.replace:  # Модуль replace для замены строк в файле
+    path: /etc/containerd/config.toml  # Путь к файлу config.toml
+    after: \[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]  # Найти секцию [plugins..."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    regexp: SystemdCgroup = false  # Найти строку "SystemdCgroup = false"
+    replace: SystemdCgroup = true  # Заменить на "SystemdCgroup = true" для использования systemd как Cgroup драйвера
+
+- name: 10. Enable Ipv4 Bridging  # Включение пересылки пакетов IPv4
+  ansible.builtin.replace:  # Модуль replace для замены строк в файле
+    path: /etc/sysctl.conf  # Путь к файлу конфигурации sysctl
+    regexp: ^#net\.ipv4\.ip_forward=1$  # Найти закомментированную строку с параметром ip_forward
+    replace: net.ipv4.ip_forward=1  # Заменить её на активную строку, включающую пересылку IPv4
+
+- name: 11.1 Delete k8s Config If Exists  # Удаление файла конфигурации k8s, если он существует
+  ansible.builtin.file:  # Модуль file для управления файлами
+    path: /etc/modules-load.d/k8s.conf  # Путь к файлу конфигурации k8s
+    state: absent  # Убедиться, что файл отсутствует (удалён)
+  tags:
+    - kube_config  # Тег для задачи "kube_config"
+
+- name: 11.2 Add k8s.config and Edit It  # Создание файла k8s.conf и его редактирование
+  ansible.builtin.lineinfile:  # Модуль lineinfile для добавления строки в файл
+    path: /etc/modules-load.d/k8s.conf  # Путь к файлу конфигурации k8s
+    line: br_netfilter  # Добавить строку "br_netfilter"
+    create: true  # Создать файл, если он не существует
+    mode: '0755'  # Установить права доступа на файл
+  tags:
+    - kube_config  # Тег для задачи "kube_config"
+
+- name: 12.1 Reboot  # Перезагрузка системы
+  ansible.builtin.reboot:  # Модуль reboot для выполнения перезагрузки
+  register: system_reboot  # Сохранение результата перезагрузки
+
+- name: 12.2 Verify Reboot Success  # Проверка успешности перезагрузки
+  ansible.builtin.ping:  # Модуль ping для проверки доступности узла
+  when: system_reboot.rebooted  # Выполнять задачу, только если система была перезагружена
+
+- name: 13.1 Update Cache  # Обновление кэша пакетов
+  ansible.builtin.apt:  # Модуль apt для управления пакетами
+    update_cache: true  # Обновить кэш
+    autoclean: true  # Удалить устаревшие пакеты
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.2 Remove apt lock file  # Удаление блокирующего файла apt
+  ansible.builtin.file:  # Модуль file для управления файлами
+    state: absent  # Убедиться, что файл отсутствует (удалён)
+    path: "/var/lib/dpkg/lock"  # Путь к блокирующему файлу
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.3 Install Prerequisite Packages  # Установка предварительных пакетов
+  ansible.builtin.apt:  # Модуль apt для установки пакетов
+    name: '{{ kube_prereq_packages }}'  # Установить пакеты из переменной kube_prereq_packages
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.4 Remove GPG Keys If They Exist  # Удаление ключей GPG, если они существуют
+  ansible.builtin.file:  # Модуль file для управления файлами
+    path: "{{ item }}"  # Путь к ключу, указанный в списке
+    state: absent  # Убедиться, что файл отсутствует (удалён)
+  with_items:  # Цикл для удаления нескольких ключей
+    - /usr/share/keyrings/kubernetes-apt-keyring.gpg  # Путь к ключу GPG
+    - /usr/share/keyrings/kubernetes-apt-keyring.gpg_armored  # Путь к бронестойкому ключу GPG
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.5 Download Kubernetes APT Key  # Загрузка ключа APT для Kubernetes
+  ansible.builtin.get_url:  # Модуль get_url для загрузки файлов по URL
+    url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key  # URL для загрузки ключа
+    dest: /usr/share/keyrings/kubernetes-apt-keyring.gpg_armored  # Путь, куда сохраняется ключ
+    mode: '0755'  # Установка прав доступа на файл
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.6 De-Armor Kubernetes APT Key  # Удаление бронирования с ключа APT Kubernetes
+  ansible.builtin.shell: gpg --dearmor < /usr/share/keyrings/kubernetes-apt-keyring.gpg_armored > /etc/apt/keyrings/kubernetes-apt-keyring.gpg  # Команда для преобразования бронированного ключа в обычный
+  no_log: true  # Не выводить в лог результат команды для безопасности
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg  # Убедиться, что файл создаётся только один раз
+  tags:
+    - install_pre_kube_packages  # Тег для задачи "install_pre_kube_packages"
+
+- name: 13.7 Add Kubernetes APT Key  # Добавление ключа APT Kubernetes в список источников
+  ansible.builtin.shell: |  # Выполнение команд в оболочке
+    set -o pipefail  # Установка опции pipefail для правильной обработки ошибок в конвейерах
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' \  # Добавление источника с ключом
+    | sudo tee /etc/apt/sources.list.d/kubernetes.list  # Запись этого источника в список источников
+  register: apt_output  # Сохранение результата выполнения команды
+  changed_when: apt_output.rc != 0  # Задача считается изменённой, только если команда возвращает ненулевой код
+  args:
+    executable: /bin/bash  # Использовать bash как интерпретатор
+  tags:
+    - install_pre_kube_packages
