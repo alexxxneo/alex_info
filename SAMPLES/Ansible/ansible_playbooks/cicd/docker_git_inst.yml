@@ -1,0 +1,50 @@
+---
+- name: Install docker and git
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Installing docker dependencies  # Установка необходимых зависимостей для docker, apt по HTTPS и другие зависимости
+      apt:
+        name: 
+          - apt-transport-https             # Позволяет apt работать через HTTPS
+          - ca-certificates                 # Установка сертификатов для HTTPS
+          - curl                            # Утилита для передачи данных с использованием различных протоколов
+          - gnupg-agent                     # Менеджер ключей для работы с GPG. Необходим для того, чтобы корректно импортировать и управлять GPG-ключами, что позволяет проверять подлинность пакетов, загружаемых из внешних репозиториев (Docker, Kubernetes). Используется модулем apt_key
+          - software-properties-common      # Утилита для управления репозиториями. Нужна для модуля "apt_repository"
+        state: present                      # Убеждаемся, что пакеты установлены, если нет то устанавливаем пакеты актуальных верси
+        update_cache: yes                   # apt update перед установкой
+
+    - name: add GPG key
+      apt_key:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          state: present
+
+    - name: Add apt repository for stable version
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        state: present     
+
+    - name: Install docker and dependensies # Установка Docker и его зависимостей
+      apt: 
+        name:                               # Список пакетов для установки из переменной packages
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present                      # Убедиться, что пакеты установлены
+        update_cache: yes                   # Обновить кэш apt перед установкой
+
+
+    - name: Enable and start docker         # Запуск сервиса Docker и занесение его в автозагрузку
+      service:
+        name: docker                        # Управление сервисом Docker
+        state: started                      # Убедиться, что сервис запущен
+        enabled: yes                        # Убедиться, что сервис включен при загрузке
+
+
+    - name: Add user ubuntu to docker group   # Добавление пользователя ubuntu в группу Docker
+      user:
+        name: ansible_user
+        group: docker
+
+  #  - name: Install git

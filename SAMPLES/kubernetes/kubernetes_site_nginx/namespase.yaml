@@ -1,0 +1,6 @@
+# файл: namespace.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lite-site # Название неймспейса, в котором будут размещены все ресурсы сайта

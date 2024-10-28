@@ -2,7 +2,61 @@
 
 # KUBERNETES
 
-ИНСТРУКЦИИ KUBECTL
+## Установка
+
+minikube and kubectl:  
+```bash
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+
+sudo dpkg -i minikube_latest_amd64.deb
+
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+```
+## Переключение kubectl на другой кластер
+Чтобы переключить `kubectl` на другой кластер, нужно изменить текущий контекст в конфигурационном файле kubeconfig, который обычно находится по пути `~/.kube/config`. Вот основные способы сделать это:
+
+### 1. Переключение контекста
+Если в конфигурации `kubectl` уже настроены несколько контекстов (кластеры):
+
+```bash
+kubectl config get-contexts
+```
+
+Вывод покажет все доступные контексты и укажет текущий. Чтобы переключиться на другой контекст, используйте команду:
+
+```bash
+kubectl config use-context <имя-контекста>
+```
+
+### 2. Добавление нового кластера в конфигурацию `kubectl`
+Если у вас есть файл kubeconfig для нового кластера (например, `new-cluster-config.yaml`), можно объединить его с текущим конфигом:
+
+```bash
+kubectl config view --merge --flatten > ~/.kube/config && KUBECONFIG=~/.kube/config:new-cluster-config.yaml kubectl config view --merge --flatten > ~/.kube/config
+```
+
+### 3. Указание файла конфигурации напрямую
+Вы также можете напрямую указать конфигурационный файл при запуске команд:
+
+```bash
+kubectl --kubeconfig=/path/to/new-cluster-config.yaml get nodes
+```
+
+### 4. Удаление старого или ненужного контекста
+Если нужно удалить контекст для кластера, выполните:
+
+```bash
+kubectl config delete-context <имя-контекста>
+```
+
+Эти действия помогут вам переключить `kubectl` на другой кластер для управления.
+
+
+## ИНСТРУКЦИИ KUBECTL
 Основные команды
 
 Общая информация о кластере:

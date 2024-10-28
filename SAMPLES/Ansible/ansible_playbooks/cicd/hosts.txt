@@ -1,0 +1,13 @@
+[dev]
+89.169.139.77    
+
+#[prod]
+#130.193.39.205  
+
+
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key=/home/alex/.ssh/id_ed25519
+#ansible_become_pass = 123
+ansible_python_interpreter=/usr/bin/python3

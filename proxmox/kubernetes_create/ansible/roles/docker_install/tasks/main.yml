@@ -18,18 +18,8 @@
 
 - name: Add apt repository for stable version
   apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
     state: present     
-# - name: Download Docker GPG key
-#   ansible.builtin.get_url:
-#     url: https://download.docker.com/linux/ubuntu/gpg
-#     dest: /usr/share/keyrings/docker-archive-keyring.gpg
-#     mode: '0644'
-
-# - name: Add official Docker apt repository
-#   apt_repository:
-#     repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable"
-#     state: present
 
 - name: Install docker and dependensies # Установка Docker и его зависимостей
   apt: 
@@ -48,7 +38,7 @@
     enabled: yes                        # Убедиться, что сервис включен при загрузке
 
 
-- name: Add user "{{ ansible_user }}" to docker group   # Добавление пользователя в группу Docker
+- name: Add user ubuntu to docker group   # Добавление пользователя ubuntu в группу Docker
   user:
     name: ansible_user
     group: docker

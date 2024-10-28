@@ -78,6 +78,25 @@ sudo apt update
 log "Установка Яндекс Браузера..."
 sudo apt install -y yandex-browser-beta
 
+log "Добавление алиасов"
+echo "\
+alias lsa="ls -la"\
+alias t="terraform"\
+alias k="kubectl"\
+alias duh="du -h --max-depth=1"\
+export YC_TOKEN=$(yc iam create-token)\
+export YC_CLOUD_ID=$(yc config get cloud-id)\
+export YC_FOLDER_ID=$(yc config get folder-id)" >> .bashrc
+
+
+log "Установка minikube и kubectl"
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+sudo dpkg -i minikube_latest_amd64.deb
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+
 log "Скрипт завершен успешно."
 exit 0
 

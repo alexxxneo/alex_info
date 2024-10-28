@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lite-service-loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: lite-app
+  ports:
+  - port: 80
+    targetPort: 80
