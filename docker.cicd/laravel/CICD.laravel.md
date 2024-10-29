@@ -615,7 +615,7 @@ test-job:
 + docker compose -f docker-compose.dev.test.yml down --volumes --rmi all
 + docker run --name=smb -d --rm sambia-app 
 + 
-+ docker compose build  перебилдить  образ снова в docker compose:
++ docker compose build  перебилдить  образ снова в docker compose
 ```yaml
   build: # при запуске docker compose собирается image на базе php:7.2-fpm, туда устанавливаются дополнения для php, копируется проект
       context: .

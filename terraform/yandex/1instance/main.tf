@@ -18,7 +18,7 @@ resource "yandex_compute_disk" "boot-disk-1" {
   name     = "boot-disk-1"       # Название диска, которое будет видно в Yandex Cloud
   type     = "network-hdd"       # Тип диска; network-hdd - сетевой HDD-диск
   size     = "20"                # Размер диска в гигабайтах
-  image_id = "fd86t95gnivk955ulbq8"  # ID образа Ubuntu 22
+  image_id = "f2ecv4ak2tq0v77ljn4b"  # ID образа Ubuntu 24
 }
 
 resource "yandex_compute_instance" "vm-1" {

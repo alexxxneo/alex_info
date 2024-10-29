@@ -6,7 +6,6 @@
   tasks:
     - name: Обновить все системные пакеты
       apt:
-        upgrade: dist
         update_cache: yes
         
     - name: Установка необходимых зависимостей
@@ -43,8 +42,18 @@
           - docker-compose-plugin
         state: present
 
-    - name: Убедиться, что Docker запущен и включен при загрузке
+    - name: Docker запущен и включен при загрузке
       systemd:
         name: docker
         enabled: yes
         state: started
+
+    - name: Добавление пользователя ubuntu в группу Docker
+      user:
+        name: ubuntu
+        group: docker
+
+    - name: Установка git
+      apt:
+        name: git
+        state: present

@@ -19,7 +19,7 @@ resource "yandex_compute_disk" "boot_disk" {
   name     = "boot-disk-${count.index + 1}"  # Уникальное название для каждого диска
   type     = "network-hdd"
   size     = "20"
-  image_id = "fd86t95gnivk955ulbq8"  # ID образа Ubuntu 22
+  image_id = "f2ecv4ak2tq0v77ljn4b"  # ID образа Ubuntu 24
 }
 
 resource "yandex_compute_instance" "vm" {

@@ -40,6 +40,7 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 
 yc compute image list --folder-id standard-images           выбираем образ ос: 
  fd86t95gnivk955ulbq8 | ubuntu-20-04-lts-v20220509                                 | ubuntu-2004-lts                  
+ f2ecv4ak2tq0v77ljn4b                                                                 ubuntu 24.04 lts
 ```conf
 
 terraform {

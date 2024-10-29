@@ -1,7 +1,15 @@
-Вот список часто используемых команд для работы с Ansible, включая команды для управления инвентарем, конфигурациями и плейбуками, а также отладочные и диагностические команды.
+Частые
+`ansible all -m ping` пропинговать все хосты
+`ansible-galaxy init myrole` создание роли
+`ansible-playbook <playbook>.yml --check` – выполнить плейбук в режиме проверки.
+`ansible-playbook site.yml -v` выполнение плейбука с отладочной информацией
+`ansible <host_group> -m shell -a "<command>"` – использовать модуль `shell` для выполнения команд оболочки.
+`ansible <host_group> -m debug -a "var=<variable>"` – вывести значение переменной.
+
+
 
 ### Основные команды
-1. `ansible all -m ping` – проверить соединение с узлами инвентаря.
+1. `ansible all -m ping` – проверить соединение с узлами инвентори.
 2. `ansible-playbook <playbook>.yml` – выполнить плейбук.
 3. `ansible-inventory --list -i <inventory>` – показать инвентарь в формате JSON.
 4. `ansible <host_group> -m setup` – получить информацию о системе для всех узлов группы.

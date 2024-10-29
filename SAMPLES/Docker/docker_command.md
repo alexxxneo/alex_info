@@ -1,7 +1,32 @@
-Конечно! Вот список из 200 команд Docker, включая базовые команды, команды для работы с контейнерами, образами, сетями, волюмами и инструментами для диагностики и отладки.
+
+Добавление зеркала для docker hub
+
+cat << EOF | sudo tee -a /etc/docker/daemon.json
+{ "registry-mirrors" : [ "https://cr.yandex/mirror", "https://c.163.com" ] }
+EOF
+
+# частые
+
++ docker build -t sambia-app -f _docker/app/gitlab/Dockerfile .  
++ docker run --name=smb-container -d --rm sambia-app 
++ docker exec -it smb-container bash
++ docker stop smb-container
+
++ docker compose -f docker-compose.dev.test.yml up -d  
++ docker exec -it sambia_app bash
++ docker compose -f docker-compose.dev.test.yml down --volumes --rmi all
++ docker run --name=smb -d --rm sambia-app 
++ 
++ docker compose build                       перебилдить  образ снова в docker compose
++ docker compose logs -f                     просмотр логов
++ docker-compose down --volumes --rmi all    Остановка и удаление всех контейнеров, сетей, томов и образов, созданных в docker-compose
++ docker-compose down --volumes              Удаление томов при остановке контейнеров (если тома создавались через compose)
+
++ docker-compose rm                          Удаление только контейнеров (не трогая сети, тома и образы)
+
+
 
 # Prune
-Вот список из 30 команд с использованием `prune`, которые помогают очищать неиспользуемые ресурсы Docker: образы, контейнеры, тома, сети и кэш. Эти команды позволяют поддерживать чистоту и эффективность использования ресурсов на хосте Docker.
 
 # Основные команды `prune`
 1. `docker system prune` – удалить неиспользуемые контейнеры, образы, сети и кеши (спросит подтверждение).
@@ -16,6 +41,8 @@
 10. `docker volume prune -f` – принудительно удалить неиспользуемые тома.
 11. `docker network prune` – удалить неиспользуемые сети.
 12. `docker network prune -f` – принудительно удалить неиспользуемые сети.
+13. ` docker system prune -a -f` очистка всех НЕИСПОЛЬЗУЕМЫХ ресурсов, включая образы, сети, тома 
+
 
 # Команды `prune` с фильтрами
 13. `docker system prune --filter "until=24h"` – удалить ресурсы, не используемые более 24 часов.

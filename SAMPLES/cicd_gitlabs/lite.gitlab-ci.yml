@@ -1,0 +1,34 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  APP_ENV: "production"  
+
+# Этап сборки
+build:
+  stage: build
+  script:
+    - echo "Building the project..."
+  only:
+    - develop
+    - master
+
+# Этап проверки
+test:
+  stage: test
+  script:
+    - echo "Running tests..."
+  only:
+    - develop
+    - master
+
+# Этап деплоя
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying to environment..."
+  only:
+    - master
+  when: manual  # Деплой только вручную (для безопасности)
