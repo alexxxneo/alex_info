@@ -1,0 +1,28 @@
+apiVersion: apps/v1  # Указывает на версию API Kubernetes, используемую для создания объекта Deployment.
+kind: Deployment  # Определяет тип объекта, который вы создаете. В данном случае это Deployment.
+metadata:
+  name: hard-deployment  # Уникальное имя для этого деплоя в рамках текущего namespace.
+  labels:
+    app: hard-app  # Произвольная метка. Используется для идентификации и группировки объектов.
+spec:
+  replicas: 1  # Количество реплик (подов), которые будут запущены.
+  selector:  # Используется для поиска одноименных подов
+    matchLabels:
+      app: hard-app  # Метки, по которым будут выбраны поды для этого деплоя. Эти метки должны совпадать с метками подов.
+  template:  # Шаблон для подов
+    metadata:
+      labels:
+        app: hard-app  # Метки, применяемые к подам, созданным этим деплоем.
+    spec:
+      containers:
+      - name: hard-container  # Уникальное имя для этого контейнера в рамках пода.
+        image: nginx:latest  # Docker-образ, используемый для создания контейнера.
+        ports:
+        - containerPort: 80  # Порт внутри контейнера, который будет открыт и прослушиваться.
+        volumeMounts:
+        - name: hard-content
+          mountPath: /usr/share/nginx/html  # Стандартный путь для NGINX
+      volumes:
+      - name: hard-content
+        configMap:
+          name: hard-app-content  # имя ConfigMap

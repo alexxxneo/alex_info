@@ -1,0 +1,17 @@
+# website-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lite-app-content
+  namespace: default
+data:
+  index.html: |
+    <html>
+    <head><title>Hi from Lite-App</title></head>
+    <body><h1>Hi from Lite-App</h1></body>
+    </html>
+  about.html: |
+    <html>
+    <head><title>about Lite-App</title></head>
+    <body><h1>About Lite-App</h1></body>
+    </html>

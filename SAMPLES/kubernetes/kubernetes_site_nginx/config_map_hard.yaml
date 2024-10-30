@@ -1,0 +1,17 @@
+# website-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hard-app-content
+  namespace: default
+data:
+  index.html: |
+    <html>
+    <head><title>Hi from Hard-App</title></head>
+    <body><h1>Hi from Hard-App</h1></body>
+    </html>
+  about.html: |
+    <html>
+    <head><title>about Hard-App</title></head>
+    <body><h1>About Hard-App</h1></body>
+    </html>

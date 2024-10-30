@@ -19,3 +19,10 @@ spec:
         image: nginx:latest  # Docker-образ, используемый для создания контейнера. "nginx:latest" указывает на образ Nginx последней версии.
         ports:
         - containerPort: 80  # Порт внутри контейнера, который будет открыт и прослушиваться. В данном случае, это порт 80.
+        volumeMounts:
+        - name: lite-content
+          mountPath: /usr/share/nginx/html  # Стандартный путь для NGINX
+      volumes:
+      - name: lite-content
+        configMap:
+          name: lite-app-content 
