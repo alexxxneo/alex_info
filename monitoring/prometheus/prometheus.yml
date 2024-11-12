@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name      : "prometheus"
+    static_configs:
+      - targets: ["10.10.10.41:9090"]
+
+  - job_name      :  "ubuntu-servers"
+    static_configs: 
+      - targets: 
+          - 10.10.10.42:9100  
+          - 10.10.10.43:9100  

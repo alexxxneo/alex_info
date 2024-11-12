@@ -14,10 +14,10 @@ log "Установка git---------------"
 sudo apt install -y git
 
 log "Установка Terraform через snap---------------"
-sudo snap install -y terraform --classic
+sudo snap install terraform --classic
 
 log "Установка VS Code через snap---------------"
-sudo snap install -y code --classic
+sudo snap install code --classic
 
 log "Установка Ansible через apt---------------"
 sudo apt install software-properties-common
@@ -26,6 +26,7 @@ sudo apt install -y ansible
 
 
 log "Запись конфигурации в файл .terraformrc----------"
+cd
 cat <<EOF > .terraformrc
 provider_installation {
   network_mirror {
@@ -64,19 +65,19 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 
 
-log " Установка Яндекс Браузера------------"
-log "Установка зависимостей..."
-sudo apt install -y wget apt-transport-https
+# log " Установка Яндекс Браузера------------"
+# log "Установка зависимостей..."
+# sudo apt install -y wget apt-transport-https
 
-log "Добавление репозитория Яндекс Браузера..."
-wget -qO - https://yum.yandex.ru/yandex-browser/YANDEX-BROWSER-GPG.KEY | sudo apt-key add -
-echo "deb https://repo.yandex.ru/yandex-browser/debian stable main" | sudo tee /etc/apt/sources.list.d/yandex-browser.list
+# log "Добавление репозитория Яндекс Браузера..."
+# wget -qO - https://yum.yandex.ru/yandex-browser/YANDEX-BROWSER-GPG.KEY | sudo apt-key add -
+# echo "deb https://repo.yandex.ru/yandex-browser/debian stable main" | sudo tee /etc/apt/sources.list.d/yandex-browser.list
 
-log "Обновление списка пакетов снова..."
-sudo apt update
+# log "Обновление списка пакетов снова..."
+# sudo apt update
 
-log "Установка Яндекс Браузера..."
-sudo apt install -y yandex-browser-beta
+# log "Установка Яндекс Браузера..."
+# sudo apt install -y yandex-browser-beta
 
 log "Добавление алиасов"
 echo "\

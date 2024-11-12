@@ -19,8 +19,8 @@ variable "ssh_key" {
 
 }
 
-resource "proxmox_vm_qemu" "kube-master" {
-  count = 2                                # Количество виртуалок
+resource "proxmox_vm_qemu" "prometheus" {
+  count = 3                                # Количество виртуалок
   name = "Prometheus-${count.index+1}"     # Имя виртуалки
   target_node = "anderson"                  # Узел Proxmox
   vmid = "100${count.index+1}"                 # id для виртуальной машины (например, 301).
