@@ -1,10 +1,11 @@
 #!/bin/bash
 
-set -e  # Прекращает выполнение скрипта, если какая-либо команда завершается с ошибкой
+#set -e  # Прекращает выполнение скрипта, если какая-либо команда завершается с ошибкой
 
+set -x # режим отладки - показывает выполнение каждой команды
 
 VM_VERSION="v1.106.0"  # https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.106.0
-VM_DIR="/usr/bin/"  # Путь для установки бинарного файла
+VM_DIR="/usr/bin"  # Путь для установки бинарного файла
 VM_STORAGE="/var/lib/victoria_metrics_data"  # Директория для хранения данных
 
 VM_TMP="/run/victoriametrics "
@@ -33,11 +34,12 @@ mkdir -p $VM_TMP
 useradd -rs /bin/false victoriametrics
 
 # меняем владельца папок для безопасности
-chown victoriametrics:victoriametrics $VM_TMP $M_STORAGE
+chown victoriametrics:victoriametrics $VM_TMP $VM_STORAGE
 
 
 # Создаём системную службу для VictoriaMetrics
 echo "Настройка службы для VictoriaMetrics..."
+
 cat <<EOF> /etc/systemd/system/victoriametrics.service
 [Unit]
 Description=VictoriaMetrics
@@ -62,10 +64,10 @@ EOF
 sudo systemctl daemon-reload
 
 # Включаем автоматический запуск службы при старте системы
-sudo systemctl enable victoria-metrics
+sudo systemctl enable victoriametrics
 
 # Запускаем службу
-sudo systemctl start victoria-metrics
+sudo systemctl start victoriametrics
 
 echo "VictoriaMetrics успешно установлена на сервере!"
 

@@ -1,5 +1,7 @@
 
 ### Основные команды
+`kubectl port-forward myapp-67dc94db54-7tp2q 8000:8000` достучаться до нашего приложения, до нашего пода из  локального окружения
+`minikube start --nodes 3 --driver=docker` запуск миникуба с несколькими нодами
 `kubectl  apply -f deployment.yml`
 `kubectl get po -o wide` инфа о подах с ip
 `kubectl config set-context --current --namespace=<namespace>` – установить нужный неймспейс.

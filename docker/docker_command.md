@@ -1,12 +1,20 @@
 
-Добавление зеркала для docker hub
+Добавление зеркала для dockerhub
 
 cat << EOF | sudo tee -a /etc/docker/daemon.json
 { "registry-mirrors" : [ "https://cr.yandex/mirror", "https://c.163.com" ] }
 EOF
 
-# частые
 
+Если ошибка доступа связанная с push в dockerhub
+Обратить внимание на тэг образа. Его нужно перетэгировать с указанием явно репозитория
+`docker tag react-app-multistage:latest lanselotta/react-app-multistage:latest`
+после этого
+`docker push lanselotta/react-app-multistage`
+
+
+# Частые команды
++ docker login -u lanselotta    логин в dockerhub
 + docker build -t sambia-app -f _docker/app/gitlab/Dockerfile .  
 + docker run --name=smb-container -d --rm sambia-app 
 + docker exec -it smb-container bash
